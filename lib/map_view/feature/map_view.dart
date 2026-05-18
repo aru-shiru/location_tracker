@@ -3,7 +3,7 @@ import 'package:flutter_map/flutter_map.dart' as fm;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart';
 
-import '../data_access/track_points.dart';
+import '../data_access/location_samples.dart';
 
 const _defaultCenter = LatLng(-6.20088, 106.84559); // Bundaran HI, Jakarta.
 
@@ -26,13 +26,15 @@ class _MapViewState extends ConsumerState<MapView> {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final track = ref.watch(trackPointsProvider);
+    final samples = ref.watch(locationSamplesProvider);
+    final track = [for (final s in samples) s.latLng];
     final current = track.isEmpty ? null : track.last;
 
     // Snap the camera to the very first fix, then leave it alone so the
     // user can pan/zoom freely without the camera fighting them.
     ref.listen<LatLng?>(
-      trackPointsProvider.select((t) => t.isEmpty ? null : t.last),
+      locationSamplesProvider
+          .select((s) => s.isEmpty ? null : s.last.latLng),
       (prev, next) {
         if (prev == null && next != null) {
           _controller.move(next, _controller.camera.zoom);

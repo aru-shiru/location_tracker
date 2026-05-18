@@ -1,22 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:latlong2/latlong.dart';
+
+import '../data_access/models/location_sample.dart';
 
 class StatusSheet extends StatelessWidget {
   const StatusSheet({
     super.key,
     required this.scrollController,
-    this.current,
-    this.accuracyMeters,
-    this.updatedAt,
     required this.tracking,
     required this.onTrackingChanged,
+    this.sample,
   });
 
   final ScrollController scrollController;
-  final LatLng? current;
-  final double? accuracyMeters;
-  final DateTime? updatedAt;
+  final LocationSample? sample;
   final bool tracking;
   final ValueChanged<bool> onTrackingChanged;
 
@@ -25,6 +22,8 @@ class StatusSheet extends StatelessWidget {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final timeFmt = DateFormat.Hms();
+    final sample = this.sample;
+
     return Material(
       elevation: 8,
       borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
@@ -44,32 +43,29 @@ class StatusSheet extends StatelessWidget {
               ),
             ),
           ),
-          if (current != null) ...[
+          if (sample != null) ...[
             Row(
               children: [
                 Expanded(
                   child: Text(
-                    '${current!.latitude.toStringAsFixed(5)}, '
-                    '${current!.longitude.toStringAsFixed(5)}',
+                    '${sample.latLng.latitude.toStringAsFixed(5)}, '
+                    '${sample.latLng.longitude.toStringAsFixed(5)}',
                     style: theme.textTheme.titleLarge?.copyWith(
                       fontFeatures: const [FontFeature.tabularFigures()],
                     ),
                   ),
                 ),
-                if (accuracyMeters != null) ...[
-                  const SizedBox(width: 12),
-                  _AccuracyBadge(meters: accuracyMeters!),
-                ],
+                const SizedBox(width: 12),
+                _AccuracyBadge(meters: sample.accuracyMeters),
               ],
             ),
             const SizedBox(height: 4),
-            if (updatedAt != null)
-              Text(
-                'Last update ${timeFmt.format(updatedAt!)}',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: scheme.onSurfaceVariant,
-                ),
+            Text(
+              'Last update ${timeFmt.format(sample.recordedAt)}',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: scheme.onSurfaceVariant,
               ),
+            ),
           ] else
             Text(
               'Waiting for first location update…',
@@ -98,14 +94,42 @@ class StatusSheet extends StatelessWidget {
           const SizedBox(height: 20),
           Text('Details', style: theme.textTheme.titleSmall),
           const SizedBox(height: 8),
-          const _DetailRow(label: 'Activity', value: 'moving'),
-          const _DetailRow(label: 'Speed', value: '4.2 km/h'),
-          const _DetailRow(label: 'Altitude', value: '31 m'),
-          const _DetailRow(label: 'Heading', value: 'N 24°'),
+          _DetailRow(label: 'Activity', value: _formatActivity(sample?.activity)),
+          _DetailRow(label: 'Speed', value: _formatSpeed(sample?.speedMetersPerSecond)),
+          _DetailRow(label: 'Altitude', value: _formatAltitude(sample?.altitudeMeters)),
+          _DetailRow(label: 'Heading', value: _formatHeading(sample?.headingDegrees)),
         ],
       ),
     );
   }
+}
+
+String _formatActivity(String? activity) {
+  if (activity == null) return '—';
+  // Plugin emits values like 'still', 'on_foot', 'walking', 'running',
+  // 'in_vehicle', 'on_bicycle', 'unknown'. Prettify for display.
+  return activity
+      .split('_')
+      .map((w) => w.isEmpty ? w : w[0].toUpperCase() + w.substring(1))
+      .join(' ');
+}
+
+String _formatSpeed(double? metersPerSecond) {
+  if (metersPerSecond == null) return '—';
+  final kmh = metersPerSecond * 3.6;
+  return '${kmh.toStringAsFixed(1)} km/h';
+}
+
+String _formatAltitude(double? meters) {
+  if (meters == null) return '—';
+  return '${meters.toStringAsFixed(0)} m';
+}
+
+String _formatHeading(double? degrees) {
+  if (degrees == null) return '—';
+  const directions = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
+  final index = (((degrees % 360) + 22.5) / 45).floor() % 8;
+  return '${directions[index]} ${degrees.toStringAsFixed(0)}°';
 }
 
 class _AccuracyBadge extends StatelessWidget {

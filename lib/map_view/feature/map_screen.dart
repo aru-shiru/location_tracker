@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../data_access/track_points.dart';
+import '../data_access/location_samples.dart';
 import '../data_access/tracking.dart';
 import '../ui/status_sheet.dart';
 import 'map_view.dart';
@@ -11,9 +11,9 @@ class MapScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final track = ref.watch(trackPointsProvider);
+    final samples = ref.watch(locationSamplesProvider);
     final tracking = ref.watch(trackingEnabledProvider);
-    final current = track.isEmpty ? null : track.last;
+    final current = samples.isEmpty ? null : samples.last;
 
     return Scaffold(
       extendBodyBehindAppBar: true,
@@ -38,9 +38,7 @@ class MapScreen extends ConsumerWidget {
             maxChildSize: 0.85,
             builder: (context, scrollController) => StatusSheet(
               scrollController: scrollController,
-              current: current,
-              accuracyMeters: current == null ? null : 8,
-              updatedAt: current == null ? null : DateTime.now(),
+              sample: current,
               tracking: tracking,
               onTrackingChanged: (v) =>
                   ref.read(trackingEnabledProvider.notifier).setEnabled(v),

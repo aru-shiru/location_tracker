@@ -70,7 +70,7 @@ class LocationPermissionScreen extends ConsumerWidget {
                 width: double.infinity,
                 child: FilledButton.icon(
                   onPressed: () =>
-                      ref.read(permissionsProvider.notifier).grantNext(),
+                      ref.read(permissionsProvider.notifier).requestNext(),
                   style: FilledButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 16),
                   ),

@@ -27,6 +27,11 @@ dependencies:
   # State management.
   flutter_riverpod: ^3.3.1
 
+  # POST_NOTIFICATIONS prompt on Android 13+ and the iOS notification
+  # authorization. flutter_background_geolocation covers location; this
+  # handles the separate notification permission.
+  permission_handler: ^11.4.0
+
   # Map tiles via OpenStreetMap (no API key required).
   flutter_map: ^8.3.0
   latlong2: ^0.9.1

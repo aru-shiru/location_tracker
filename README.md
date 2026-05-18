@@ -98,6 +98,15 @@ In the attached run:
   declaration and pairs naturally with Riverpod's `==`-based rebuild semantics.
   Defer adding it until we actually have ≥ 2 such classes — there is no point
   paying the build_runner cost for the single boolean-triple we have today.
+- **Cold-start permission state shows as denied for a frame or two.**
+  `PermissionsNotifier` keeps a synchronous `Notifier<Permissions>` and
+  seeds with `const Permissions()` (all `false`) until
+  `flutter_background_geolocation.ready()` resolves. On a fresh install
+  the empty state is the right screen anyway, so the flicker is
+  invisible. On a relaunch with everything already granted, the empty
+  state shows for a beat before `RootShell` flips to the map. Switch to
+  an `AsyncNotifier<Permissions>` plus a small splash if this ever feels
+  janky.
 - **License key for production builds.** `flutter_background_geolocation` is
   free in debug, but release builds need a per-app token from the Transistor
   dashboard wired through `bg.Config.transistorAuthorizationToken`. Right now

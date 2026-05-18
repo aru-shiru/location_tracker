@@ -3,23 +3,44 @@ import 'package:flutter_background_geolocation/flutter_background_geolocation.da
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart';
 
+import '../../shared/shared.dart';
 import 'models/location_sample.dart';
 
-/// The ordered series of location fixes recorded since app start.
+/// The ordered series of location fixes ever recorded for this install.
 ///
-/// Subscribes to `flutter_background_geolocation.onLocation` and appends
-/// a [LocationSample] (lat/lng plus accuracy, speed, altitude, heading,
-/// motion activity, and timestamp) for each incoming fix. Tracking has
-/// to be running for any points to arrive — the plugin only emits while
-/// the foreground service is started.
-///
-/// In-memory only for now; points do not survive an app kill.
+/// Subscribes to `flutter_background_geolocation.onLocation` and persists
+/// each [LocationSample] to drift. The exposed `List<LocationSample>` is
+/// re-emitted from `db.watchAllPoints()`, so the same provider feeds both
+/// "new fixes coming in right now" and "fixes recorded in a previous app
+/// run" — surviving process kills and reboots.
 class LocationSamplesNotifier extends Notifier<List<LocationSample>> {
   @override
   List<LocationSample> build() {
-    bg.BackgroundGeolocation.onLocation((bg.Location location) {
-      state = [...state, _toSample(location)];
+    final db = ref.read(databaseProvider);
+
+    // Stream the full history from drift; the first emission replays
+    // everything persisted from previous app runs, subsequent emissions
+    // include each newly inserted fix.
+    final sub = db.watchAllPoints().listen((rows) {
+      state = [for (final r in rows) _rowToSample(r)];
     });
+    ref.onDispose(sub.cancel);
+
+    // Persist every incoming fix; the watcher above picks the row up.
+    bg.BackgroundGeolocation.onLocation((bg.Location location) {
+      final sample = _toSample(location);
+      db.insertPoint(
+        latitude: sample.latLng.latitude,
+        longitude: sample.latLng.longitude,
+        accuracyMeters: sample.accuracyMeters,
+        recordedAt: sample.recordedAt,
+        speedMetersPerSecond: sample.speedMetersPerSecond,
+        altitudeMeters: sample.altitudeMeters,
+        headingDegrees: sample.headingDegrees,
+        activity: sample.activity,
+      );
+    });
+
     return const [];
   }
 
@@ -37,6 +58,18 @@ class LocationSamplesNotifier extends Notifier<List<LocationSample>> {
       altitudeMeters: sanitize(location.coords.altitude),
       headingDegrees: sanitize(location.coords.heading),
       activity: location.activity.type,
+    );
+  }
+
+  LocationSample _rowToSample(LocationPoint row) {
+    return LocationSample(
+      latLng: LatLng(row.latitude, row.longitude),
+      accuracyMeters: row.accuracyMeters,
+      recordedAt: row.recordedAt,
+      speedMetersPerSecond: row.speedMetersPerSecond,
+      altitudeMeters: row.altitudeMeters,
+      headingDegrees: row.headingDegrees,
+      activity: row.activity,
     );
   }
 }

@@ -27,6 +27,10 @@ dependencies:
   # State management.
   flutter_riverpod: ^3.3.1
 
+  # Map tiles via OpenStreetMap (no API key required).
+  flutter_map: ^8.3.0
+  latlong2: ^0.9.1
+
   # Date/time formatting in the UI.
   intl: ^0.20.2
 

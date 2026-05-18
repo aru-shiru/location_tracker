@@ -1,32 +1,20 @@
 import 'package:flutter/material.dart';
-import 'package:latlong2/latlong.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../data_access/track_points.dart';
+import '../data_access/tracking.dart';
 import '../ui/map_view.dart';
 import '../ui/status_sheet.dart';
 
-class MapScreen extends StatefulWidget {
+class MapScreen extends ConsumerWidget {
   const MapScreen({super.key});
 
   @override
-  State<MapScreen> createState() => _MapScreenState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final track = ref.watch(trackPointsProvider);
+    final tracking = ref.watch(trackingEnabledProvider);
+    final current = track.last;
 
-class _MapScreenState extends State<MapScreen> {
-  // Dummy track around Bundaran HI, Jakarta. The last point is "current".
-  static const List<LatLng> _track = [
-    LatLng(-6.20210, 106.84610),
-    LatLng(-6.20170, 106.84595),
-    LatLng(-6.20130, 106.84580),
-    LatLng(-6.20100, 106.84570),
-    LatLng(-6.20088, 106.84559),
-  ];
-
-  bool _tracking = true;
-
-  LatLng get _current => _track.last;
-
-  @override
-  Widget build(BuildContext context) {
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
@@ -43,18 +31,19 @@ class _MapScreenState extends State<MapScreen> {
       ),
       body: Stack(
         children: [
-          MapView(track: _track, current: _current),
+          MapView(track: track, current: current),
           DraggableScrollableSheet(
             initialChildSize: 0.32,
             minChildSize: 0.18,
             maxChildSize: 0.85,
             builder: (context, scrollController) => StatusSheet(
               scrollController: scrollController,
-              current: _current,
+              current: current,
               accuracyMeters: 8,
               updatedAt: DateTime.now(),
-              tracking: _tracking,
-              onTrackingChanged: (v) => setState(() => _tracking = v),
+              tracking: tracking,
+              onTrackingChanged: (v) =>
+                  ref.read(trackingEnabledProvider.notifier).setEnabled(v),
             ),
           ),
         ],

@@ -2,6 +2,10 @@ allprojects {
     repositories {
         google()
         mavenCentral()
+        // flutter_background_geolocation ships its native AAR via a project-local
+        // maven repo, so we have to make Gradle aware of it.
+        maven { url = uri("${project(":flutter_background_geolocation").projectDir}/libs") }
+        maven { url = uri("https://developer.huawei.com/repo/") }
     }
 }
 

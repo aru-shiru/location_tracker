@@ -2,18 +2,43 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart' as fm;
 import 'package:latlong2/latlong.dart';
 
-class MapView extends StatelessWidget {
-  const MapView({super.key, required this.track, required this.current});
+const _defaultCenter = LatLng(-6.20088, 106.84559); // Bundaran HI, Jakarta.
+
+class MapView extends StatefulWidget {
+  const MapView({super.key, required this.track, this.current});
 
   final List<LatLng> track;
-  final LatLng current;
+  final LatLng? current;
+
+  @override
+  State<MapView> createState() => _MapViewState();
+}
+
+class _MapViewState extends State<MapView> {
+  final _controller = fm.MapController();
+
+  @override
+  void didUpdateWidget(MapView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final next = widget.current;
+    if (next != null && next != oldWidget.current) {
+      _controller.move(next, _controller.camera.zoom);
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     return fm.FlutterMap(
+      mapController: _controller,
       options: fm.MapOptions(
-        initialCenter: current,
+        initialCenter: widget.current ?? _defaultCenter,
         initialZoom: 16,
         minZoom: 3,
         maxZoom: 19,
@@ -27,26 +52,28 @@ class MapView extends StatelessWidget {
           userAgentPackageName: 'com.example.location_tracker',
           maxNativeZoom: 19,
         ),
-        fm.PolylineLayer(
-          polylines: [
-            fm.Polyline(
-              points: track,
-              strokeWidth: 5,
-              color: scheme.primary,
-            ),
-          ],
-        ),
-        fm.MarkerLayer(
-          markers: [
-            fm.Marker(
-              point: current,
-              width: 56,
-              height: 56,
-              alignment: Alignment.center,
-              child: _CurrentMarker(color: scheme.primary),
-            ),
-          ],
-        ),
+        if (widget.track.length >= 2)
+          fm.PolylineLayer(
+            polylines: [
+              fm.Polyline(
+                points: widget.track,
+                strokeWidth: 5,
+                color: scheme.primary,
+              ),
+            ],
+          ),
+        if (widget.current != null)
+          fm.MarkerLayer(
+            markers: [
+              fm.Marker(
+                point: widget.current!,
+                width: 56,
+                height: 56,
+                alignment: Alignment.center,
+                child: _CurrentMarker(color: scheme.primary),
+              ),
+            ],
+          ),
       ],
     );
   }

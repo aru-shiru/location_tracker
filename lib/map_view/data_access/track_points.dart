@@ -1,19 +1,31 @@
+import 'package:flutter_background_geolocation/flutter_background_geolocation.dart'
+    as bg;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart';
 
-/// The ordered series of recorded location points to draw on the map.
+/// The ordered series of LatLng points recorded since app start.
 ///
-/// Currently emits a hard-coded dummy track around Bundaran HI, Jakarta so
-/// the screen can wire to a provider before the real source exists. Will
-/// be replaced with a stream-backed provider once
-/// `flutter_background_geolocation` is wired up and the points are
-/// persisted to drift.
-final trackPointsProvider = Provider<List<LatLng>>((ref) {
-  return const [
-    LatLng(-6.20210, 106.84610),
-    LatLng(-6.20170, 106.84595),
-    LatLng(-6.20130, 106.84580),
-    LatLng(-6.20100, 106.84570),
-    LatLng(-6.20088, 106.84559),
-  ];
-});
+/// Subscribes to `flutter_background_geolocation.onLocation` and appends
+/// each fix to the in-memory list. Tracking has to be running for any
+/// points to arrive — the plugin only emits while the foreground service
+/// is started.
+///
+/// Points are not persisted yet, so they don't survive an app kill;
+/// drift-backed storage is the next layer.
+class TrackPointsNotifier extends Notifier<List<LatLng>> {
+  @override
+  List<LatLng> build() {
+    bg.BackgroundGeolocation.onLocation((bg.Location location) {
+      state = [
+        ...state,
+        LatLng(location.coords.latitude, location.coords.longitude),
+      ];
+    });
+    return const [];
+  }
+}
+
+final trackPointsProvider =
+    NotifierProvider<TrackPointsNotifier, List<LatLng>>(
+  TrackPointsNotifier.new,
+);

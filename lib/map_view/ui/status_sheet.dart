@@ -6,17 +6,17 @@ class StatusSheet extends StatelessWidget {
   const StatusSheet({
     super.key,
     required this.scrollController,
-    required this.current,
-    required this.accuracyMeters,
-    required this.updatedAt,
+    this.current,
+    this.accuracyMeters,
+    this.updatedAt,
     required this.tracking,
     required this.onTrackingChanged,
   });
 
   final ScrollController scrollController;
-  final LatLng current;
-  final double accuracyMeters;
-  final DateTime updatedAt;
+  final LatLng? current;
+  final double? accuracyMeters;
+  final DateTime? updatedAt;
   final bool tracking;
   final ValueChanged<bool> onTrackingChanged;
 
@@ -25,8 +25,6 @@ class StatusSheet extends StatelessWidget {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final timeFmt = DateFormat.Hms();
-    final latLngText =
-        '${current.latitude.toStringAsFixed(5)}, ${current.longitude.toStringAsFixed(5)}';
     return Material(
       elevation: 8,
       borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
@@ -46,27 +44,39 @@ class StatusSheet extends StatelessWidget {
               ),
             ),
           ),
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  latLngText,
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    fontFeatures: const [FontFeature.tabularFigures()],
+          if (current != null) ...[
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    '${current!.latitude.toStringAsFixed(5)}, '
+                    '${current!.longitude.toStringAsFixed(5)}',
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontFeatures: const [FontFeature.tabularFigures()],
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              _AccuracyBadge(meters: accuracyMeters),
-            ],
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'Last update ${timeFmt.format(updatedAt)}',
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: scheme.onSurfaceVariant,
+                if (accuracyMeters != null) ...[
+                  const SizedBox(width: 12),
+                  _AccuracyBadge(meters: accuracyMeters!),
+                ],
+              ],
             ),
-          ),
+            const SizedBox(height: 4),
+            if (updatedAt != null)
+              Text(
+                'Last update ${timeFmt.format(updatedAt!)}',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: scheme.onSurfaceVariant,
+                ),
+              ),
+          ] else
+            Text(
+              'Waiting for first location update…',
+              style: theme.textTheme.bodyLarge?.copyWith(
+                color: scheme.onSurfaceVariant,
+              ),
+            ),
           const SizedBox(height: 20),
           Card(
             margin: EdgeInsets.zero,

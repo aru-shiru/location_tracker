@@ -13,7 +13,7 @@ class MapScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final track = ref.watch(trackPointsProvider);
     final tracking = ref.watch(trackingEnabledProvider);
-    final current = track.last;
+    final current = track.isEmpty ? null : track.last;
 
     return Scaffold(
       extendBodyBehindAppBar: true,
@@ -39,8 +39,8 @@ class MapScreen extends ConsumerWidget {
             builder: (context, scrollController) => StatusSheet(
               scrollController: scrollController,
               current: current,
-              accuracyMeters: 8,
-              updatedAt: DateTime.now(),
+              accuracyMeters: current == null ? null : 8,
+              updatedAt: current == null ? null : DateTime.now(),
               tracking: tracking,
               onTrackingChanged: (v) =>
                   ref.read(trackingEnabledProvider.notifier).setEnabled(v),

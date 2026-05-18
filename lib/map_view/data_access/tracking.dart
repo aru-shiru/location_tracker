@@ -18,6 +18,9 @@ class TrackingNotifier extends Notifier<bool> {
   Future<void> _syncFromPlugin() async {
     final pluginState = await bg.BackgroundGeolocation.state;
     state = pluginState.enabled;
+    if (pluginState.enabled) {
+      _requestCurrentFix();
+    }
   }
 
   Future<void> setEnabled(bool enabled) async {
@@ -25,6 +28,17 @@ class TrackingNotifier extends Notifier<bool> {
         ? await bg.BackgroundGeolocation.start()
         : await bg.BackgroundGeolocation.stop();
     state = newState.enabled;
+    if (newState.enabled) {
+      _requestCurrentFix();
+    }
+  }
+
+  /// Nudge the plugin to acquire a fix right now instead of waiting for a
+  /// movement-triggered one. The result is delivered through the
+  /// `onLocation` callback that `trackPointsProvider` already listens to,
+  /// so we deliberately don't await the returned `Location` here.
+  void _requestCurrentFix() {
+    unawaited(bg.BackgroundGeolocation.getCurrentPosition());
   }
 }
 

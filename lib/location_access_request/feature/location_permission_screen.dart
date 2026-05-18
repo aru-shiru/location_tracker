@@ -1,35 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../shared/shared.dart';
 import '../data_access/models/permission_item.dart';
 
-class LocationPermissionScreen extends StatelessWidget {
-  const LocationPermissionScreen({
-    super.key,
-    required this.foregroundGranted,
-    required this.backgroundGranted,
-    required this.notificationsGranted,
-    required this.onRequestAccess,
-  });
+class LocationPermissionScreen extends ConsumerWidget {
+  const LocationPermissionScreen({super.key});
 
-  final bool foregroundGranted;
-  final bool backgroundGranted;
-  final bool notificationsGranted;
-  final VoidCallback onRequestAccess;
-
-  String get _ctaLabel {
-    if (!foregroundGranted) return 'Grant location access';
-    if (!backgroundGranted) return 'Allow background location';
-    if (!notificationsGranted) return 'Enable notifications';
+  String _ctaLabel(Permissions p) {
+    if (!p.foreground) return 'Grant location access';
+    if (!p.background) return 'Allow background location';
+    if (!p.notifications) return 'Enable notifications';
     return 'All set';
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
-    final grantedCount = (foregroundGranted ? 1 : 0) +
-        (backgroundGranted ? 1 : 0) +
-        (notificationsGranted ? 1 : 0);
+    final permissions = ref.watch(permissionsProvider);
 
     return Scaffold(
       body: SafeArea(
@@ -63,19 +52,19 @@ class LocationPermissionScreen extends StatelessWidget {
                     icon: Icons.location_on_outlined,
                     title: 'Foreground location',
                     subtitle: 'Read GPS while the app is open.',
-                    granted: foregroundGranted,
+                    granted: permissions.foreground,
                   ),
                   PermissionItem(
                     icon: Icons.layers_outlined,
                     title: 'Background location',
                     subtitle: 'Keep recording when the app is closed.',
-                    granted: backgroundGranted,
+                    granted: permissions.background,
                   ),
                   PermissionItem(
                     icon: Icons.notifications_active_outlined,
                     title: 'Notifications',
                     subtitle: 'Show the persistent tracking notification.',
-                    granted: notificationsGranted,
+                    granted: permissions.notifications,
                   ),
                 ],
               ),
@@ -83,17 +72,18 @@ class LocationPermissionScreen extends StatelessWidget {
               SizedBox(
                 width: double.infinity,
                 child: FilledButton.icon(
-                  onPressed: onRequestAccess,
+                  onPressed: () =>
+                      ref.read(permissionsProvider.notifier).grantNext(),
                   style: FilledButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 16),
                   ),
                   icon: const Icon(Icons.my_location),
-                  label: Text(_ctaLabel),
+                  label: Text(_ctaLabel(permissions)),
                 ),
               ),
               const SizedBox(height: 12),
               Text(
-                '$grantedCount of 3 granted · change anytime in Settings.',
+                '${permissions.grantedCount} of 3 granted · change anytime in Settings.',
                 textAlign: TextAlign.center,
                 style: theme.textTheme.bodySmall
                     ?.copyWith(color: scheme.onSurfaceVariant),

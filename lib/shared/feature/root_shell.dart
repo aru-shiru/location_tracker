@@ -10,7 +10,9 @@ class RootShell extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final permissions = ref.watch(permissionsProvider);
+    final allGranted = ref.watch(
+      permissionsProvider.select((p) => p.allGranted),
+    );
     return AnimatedSwitcher(
       duration: const Duration(milliseconds: 280),
       switchInCurve: Curves.easeOutCubic,
@@ -19,16 +21,9 @@ class RootShell extends ConsumerWidget {
         opacity: animation,
         child: child,
       ),
-      child: permissions.allGranted
+      child: allGranted
           ? const MapScreen(key: ValueKey('home'))
-          : LocationPermissionScreen(
-              key: const ValueKey('empty'),
-              foregroundGranted: permissions.foreground,
-              backgroundGranted: permissions.background,
-              notificationsGranted: permissions.notifications,
-              onRequestAccess: () =>
-                  ref.read(permissionsProvider.notifier).grantNext(),
-            ),
+          : const LocationPermissionScreen(key: ValueKey('empty')),
     );
   }
 }

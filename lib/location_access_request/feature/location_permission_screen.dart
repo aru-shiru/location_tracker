@@ -3,24 +3,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../shared/shared.dart';
 import '../data_access/models/permission_item.dart';
+import '../data_access/providers/next_permission_label.dart';
 import '../ui/location_illustration.dart';
 import '../ui/permission_checklist.dart';
 
 class LocationPermissionScreen extends ConsumerWidget {
   const LocationPermissionScreen({super.key});
 
-  String _ctaLabel(Permissions p) {
-    if (!p.foreground) return 'Grant location access';
-    if (!p.background) return 'Allow background location';
-    if (!p.notifications) return 'Enable notifications';
-    return 'All set';
-  }
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final permissions = ref.watch(permissionsProvider);
+    final ctaLabel = ref.watch(nextPermissionLabelProvider);
 
     return Scaffold(
       body: SafeArea(
@@ -80,7 +75,7 @@ class LocationPermissionScreen extends ConsumerWidget {
                     padding: const EdgeInsets.symmetric(vertical: 16),
                   ),
                   icon: const Icon(Icons.my_location),
-                  label: Text(_ctaLabel(permissions)),
+                  label: Text(ctaLabel),
                 ),
               ),
               const SizedBox(height: 12),

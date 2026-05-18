@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'shared/shared.dart';
 
 void main() {
-  runApp(const LocationTrackerApp());
+  runApp(const ProviderScope(child: LocationTrackerApp()));
 }
 
 class LocationTrackerApp extends StatelessWidget {

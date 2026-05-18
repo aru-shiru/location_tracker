@@ -1,39 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../location_access_request/location_access_request.dart';
 import '../../map_view/map_view.dart';
+import '../data_access/permissions.dart';
 
-class RootShell extends StatefulWidget {
+class RootShell extends ConsumerWidget {
   const RootShell({super.key});
 
   @override
-  State<RootShell> createState() => _RootShellState();
-}
-
-class _RootShellState extends State<RootShell> {
-  bool _foreground = false;
-  bool _background = false;
-  bool _notifications = false;
-
-  bool get _allGranted => _foreground && _background && _notifications;
-
-  // Mockup: advance one permission per tap to mimic the real OS dialog flow
-  // (foreground → background → notifications). The map only appears once all
-  // three are granted.
-  void _requestNext() {
-    setState(() {
-      if (!_foreground) {
-        _foreground = true;
-      } else if (!_background) {
-        _background = true;
-      } else if (!_notifications) {
-        _notifications = true;
-      }
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final permissions = ref.watch(permissionsProvider);
     return AnimatedSwitcher(
       duration: const Duration(milliseconds: 280),
       switchInCurve: Curves.easeOutCubic,
@@ -42,14 +19,15 @@ class _RootShellState extends State<RootShell> {
         opacity: animation,
         child: child,
       ),
-      child: _allGranted
+      child: permissions.allGranted
           ? const MapScreen(key: ValueKey('home'))
           : LocationPermissionScreen(
               key: const ValueKey('empty'),
-              foregroundGranted: _foreground,
-              backgroundGranted: _background,
-              notificationsGranted: _notifications,
-              onRequestAccess: _requestNext,
+              foregroundGranted: permissions.foreground,
+              backgroundGranted: permissions.background,
+              notificationsGranted: permissions.notifications,
+              onRequestAccess: () =>
+                  ref.read(permissionsProvider.notifier).grantNext(),
             ),
     );
   }

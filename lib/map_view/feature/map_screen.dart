@@ -3,8 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../data_access/track_points.dart';
 import '../data_access/tracking.dart';
-import '../ui/map_view.dart';
 import '../ui/status_sheet.dart';
+import 'map_view.dart';
 
 class MapScreen extends ConsumerWidget {
   const MapScreen({super.key});
@@ -31,7 +31,7 @@ class MapScreen extends ConsumerWidget {
       ),
       body: Stack(
         children: [
-          MapView(track: track, current: current),
+          const MapView(),
           DraggableScrollableSheet(
             initialChildSize: 0.32,
             minChildSize: 0.18,
